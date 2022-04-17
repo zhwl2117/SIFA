@@ -27,8 +27,8 @@ def batch_norm(x, is_training = True):
 
 
 def general_conv2d(inputconv, o_d=64, f_h=7, f_w=7, s_h=1, s_w=1, stddev=0.01,
-                   padding="VALID", name="conv2d", do_norm=True, do_relu=True, keep_rate=None,
-                   relufactor=0, norm_type=None, is_training=True):
+                padding="VALID", name="conv2d", do_norm=True, do_relu=True, keep_rate=None,
+                relufactor=0, norm_type=None, is_training=True):
     with tf.variable_scope(name):
 
         conv = tf.contrib.layers.conv2d(
@@ -44,7 +44,7 @@ def general_conv2d(inputconv, o_d=64, f_h=7, f_w=7, s_h=1, s_w=1, stddev=0.01,
 
         if do_norm:
             if norm_type is None:
-                print "normalization type is not specified!"
+                print("normalization type is not specified!")
                 quit()
             elif norm_type=='Ins':
                 conv = instance_norm(conv)
@@ -61,8 +61,8 @@ def general_conv2d(inputconv, o_d=64, f_h=7, f_w=7, s_h=1, s_w=1, stddev=0.01,
 
 
 def general_conv2d_ga(inputconv, o_d=64, f_h=7, f_w=7, s_h=1, s_w=1, stddev=0.02,
-                   padding="VALID", name="conv2d", do_norm=True, do_relu=True, keep_rate=None,
-                   relufactor=0, norm_type=None, is_training=True):
+                padding="VALID", name="conv2d", do_norm=True, do_relu=True, keep_rate=None,
+                relufactor=0, norm_type=None, is_training=True):
     with tf.variable_scope(name):
 
         conv = tf.contrib.layers.conv2d(
@@ -78,7 +78,7 @@ def general_conv2d_ga(inputconv, o_d=64, f_h=7, f_w=7, s_h=1, s_w=1, stddev=0.02
 
         if do_norm:
             if norm_type is None:
-                print "normalization type is not specified!"
+                print("normalization type is not specified!")
                 quit()
             elif norm_type=='Ins':
                 conv = instance_norm(conv)
@@ -95,8 +95,8 @@ def general_conv2d_ga(inputconv, o_d=64, f_h=7, f_w=7, s_h=1, s_w=1, stddev=0.02
 
 
 def dilate_conv2d(inputconv, i_d=64, o_d=64, f_h=7, f_w=7, rate=2, stddev=0.01,
-                   padding="VALID", name="dilate_conv2d", do_norm=True, do_relu=True, keep_rate=None,
-                   relufactor=0, norm_type=None, is_training=True):
+                padding="VALID", name="dilate_conv2d", do_norm=True, do_relu=True, keep_rate=None,
+                relufactor=0, norm_type=None, is_training=True):
     with tf.variable_scope(name):
         f_1 = tf.get_variable('weights', [f_h, f_w, i_d, o_d], initializer=tf.truncated_normal_initializer(stddev=stddev))
         b_1 = tf.get_variable('biases', [o_d], initializer=tf.constant_initializer(0.0, tf.float32))
@@ -107,7 +107,7 @@ def dilate_conv2d(inputconv, i_d=64, o_d=64, f_h=7, f_w=7, rate=2, stddev=0.01,
 
         if do_norm:
             if norm_type is None:
-                print "normalization type is not specified!"
+                print("normalization type is not specified!")
                 quit()
             elif norm_type=='Ins':
                 di_conv_2d = instance_norm(di_conv_2d)
@@ -124,8 +124,8 @@ def dilate_conv2d(inputconv, i_d=64, o_d=64, f_h=7, f_w=7, rate=2, stddev=0.01,
 
 
 def general_deconv2d(inputconv, outshape, o_d=64, f_h=7, f_w=7, s_h=1, s_w=1,
-                     stddev=0.02, padding="VALID", name="deconv2d",
-                     do_norm=True, do_relu=True, relufactor=0, norm_type=None, is_training=True):
+                    stddev=0.02, padding="VALID", name="deconv2d",
+                    do_norm=True, do_relu=True, relufactor=0, norm_type=None, is_training=True):
     with tf.variable_scope(name):
 
         conv = tf.contrib.layers.conv2d_transpose(
@@ -138,7 +138,7 @@ def general_deconv2d(inputconv, outshape, o_d=64, f_h=7, f_w=7, s_h=1, s_w=1,
 
         if do_norm:
             if norm_type is None:
-                print "normalization type is not specified!"
+                print("normalization type is not specified!")
                 quit()
             elif norm_type=='Ins':
                 conv = instance_norm(conv)
