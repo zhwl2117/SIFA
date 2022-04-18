@@ -13,7 +13,7 @@ def make_datalist(data_fd, data_list):
 
 
 if __name__ == '__main__':
-    data_fd = './data/training_mr'
-    data_list = './data/datalist/training_mr.txt'
+    data_fd = './data/validation_mr'
+    data_list = './data/datalist/validation_mr.txt'
 
     make_datalist(data_fd, data_list)
