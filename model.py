@@ -1,6 +1,5 @@
-
-
 import tensorflow as tf
+import tensorflow_addons as tfa
 import layers
 import json
 
@@ -104,6 +103,47 @@ def build_resnet_block(inputres, dim, name="resnet", padding="REFLECT", norm_typ
         return tf.nn.relu(out_res + inputres)
 
 
+class GeneralConv2D(tf.keras.Model):
+
+    def __init__(self, output_dim=64, f_h=7, f_w=7, s_h=1, s_w=1, padding='valid', 
+                do_relu=True, keep_rate=None, relufactor=0, norm_type=None) -> None:
+        super().__init__()
+        self.padding = padding
+        self.conv = tf.keras.layers.Conv2D(output_dim, [f_h, f_w], [s_h, s_w], padding=padding)
+        if norm_type is not None:
+            if norm_type == 'Ins':
+                self.norm = tfa.layers.InstanceNormalization(axis=-1)
+            else:
+                self.norm = tf.keras.layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001)
+        self.dropout = tf.keras.layers.Dropout(1-keep_rate)
+        if do_relu:
+            self.relu = tf.keras.layers.ReLU(negative_slope=relufactor)
+
+    def call(self, input, is_training=True):
+        x = self.conv(input)
+        if is_training:
+            x = self.dropout(x)
+        x = self.norm(x)
+        x = self.relu(x)
+        return x
+
+
+class ResNetBlock(tf.keras.Model):
+    def __init__(self, output_dim=64, paddings=None, f_h=7, f_w=7, s_h=1, s_w=1, padding='valid', 
+                keep_rate=None, relufactor=0, norm_type=None) -> None:
+        if paddings is None:
+            self.paddings = [[0, 0], [1, 1], [1, 1], [0, 0]]
+        self.conv1 = GeneralConv2D(output_dim, f_h, f_w, s_h, s_w, padding, keep_rate, relufactor, norm_type)
+        self.conv2 = GeneralConv2D(output_dim, f_h, f_w, s_h, s_w, padding, keep_rate, relufactor, norm_type, do_relu=False)
+
+    def call(self, x):
+        x = tf.pad(x, self.paddings, "REFLECT")
+        x = self.conv1(x)
+        x = tf.pad(x, self.paddings, "REFLECT")
+        x = self.conv2(x)
+        return x
+
+
 def build_resnet_block_ins(inputres, dim, name="resnet", padding="REFLECT"):
     with tf.variable_scope(name):
         out_res = tf.pad(inputres, [[0, 0], [1, 1], [1, 1], [0, 0]], padding)
@@ -112,6 +152,11 @@ def build_resnet_block_ins(inputres, dim, name="resnet", padding="REFLECT"):
         out_res = layers.general_conv2d_ga(out_res, dim, 3, 3, 1, 1, 0.02, "VALID", "c2", do_relu=False, norm_type='Ins')
 
         return tf.nn.relu(out_res + inputres)
+
+
+class ResNetBlockIns(ResNetBlock):
+    def __init__(self, output_dim=64, paddings=None, f_h=7, f_w=7, s_h=1, s_w=1, padding='valid', do_relu=True, keep_rate=None, relufactor=0) -> None:
+        super().__init__(output_dim, paddings, f_h, f_w, s_h, s_w, padding, do_relu, keep_rate, relufactor, "Ins")
 
 
 def build_resnet_block_ds(inputres, dim_in, dim_out, name="resnet", padding="REFLECT", norm_type=None, is_training=True, keep_rate=0.75):
@@ -125,6 +170,21 @@ def build_resnet_block_ds(inputres, dim_in, dim_out, name="resnet", padding="REF
         inputres = tf.pad(inputres, [[0, 0], [0, 0], [0, 0], [(dim_out - dim_in) // 2, (dim_out - dim_in) // 2]], padding)
 
         return tf.nn.relu(out_res + inputres)
+
+
+class ResNetBlockDs(ResNetBlock):
+    def __init__(self, dim_in, dim_out, output_dim=64, paddings=None, f_h=7, f_w=7, s_h=1, s_w=1, padding='valid', keep_rate=None, relufactor=0, norm_type=None) -> None:
+        super().__init__(output_dim, paddings, f_h, f_w, s_h, s_w, padding, keep_rate, relufactor, norm_type)
+        self.dim_in = dim_in
+        self.dim_out = dim_out
+
+    def call(self, x):
+        o = tf.pad(x, self.paddings, "REFLECT")
+        o = self.conv1(o)
+        o = tf.pad(o, self.paddings, "REFLECT")
+        o = self.conv2(o)
+        x = tf.pad(x, [[0, 0], [0, 0], [0, 0], [(self.dim_out - self.dim_in) // 2, (self.dim_out - self.dim_in) // 2]], "REFLECT")
+        return tf.nn.relu(o + x)
 
 
 def build_drn_block(inputdrn, dim, name="drn", padding="REFLECT", norm_type=None, is_training=True, keep_rate=0.75):
